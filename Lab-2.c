@@ -2,7 +2,6 @@
 Lab 2 - Batch Process Scheduling
 Comp 322/L
 Nima Shafie
-can you see this?
 */
 
 #define _CRT_SECURE_NO_WARNINGS
@@ -37,22 +36,37 @@ struct TableType {
 
 typedef struct TableType table_typedef;	// pcb = struct Node
 
-int TOTAL_PROCS;
+int MAX_PROCS;
 
 // finds the maximum of two integers
 int MaxOfTwoInts(int num1, int num2) {
-
-	return 1;
+	if (num1 > num2) return num1;
+	else return num2;
 }
 
 // prints out a formatted table with table_type variables
 /***************************************************************/
 void PrintTable() {
 	/* declare local variables */
+
 	/* print table header */
+	printf("ID\t Arrival \t Total \t Start \t End \tTurnaround");
+	printf("\n-------------------------------------------------------------\n");
+
 	/* for each process */
+	for (int i = 1; i <= MAX_PROCS; i++) {
 		/* print the contents (id, arrival time, total_cycles) of each field of the table's index */
+		printf("%d\t", process[i].id);
+		printf(" %d\t", process[i].arrival);
+		printf("\t%d", process[i].total_cpu);
+		if (process[i].done == false) printf("\n");
 		/* if process has been scheduled ("done" field is 1, print other contents (start time, end time, turnaround time) */
+		else {
+			printf("%d\t", process[i].start_time);
+			printf("%d\t", process[i].end_time);
+			printf("%d\t", process[i].turnaround_time);
+		}
+	}
 	return;
 }
 
@@ -69,17 +83,17 @@ void EnterParameters() {
 
 	/* prompt for total number of processes */
 	printf("Enter total number of processes: ");
-	scanf("%d", &TOTAL_PROCS);
+	scanf("%d", &MAX_PROCS);
 
 	/* allocate memory for table to hold process parameters */
-	process = (table_typedef*)malloc(TOTAL_PROCS * sizeof(table_typedef)); // Memory is allocated for 'n' elements 
+	process = (table_typedef*)malloc(MAX_PROCS * sizeof(table_typedef)); // Memory is allocated for 'n' elements 
 	if (process == NULL) {
 		printf("\nNo memory is allocated.\n\n");
 		exit(0);
 	}
 
 	// each process[i] is its own process, so we're still making a dynamic array of processes
-	for (int i = 1; i <= TOTAL_PROCS; i++) {
+	for (int i = 1; i <= MAX_PROCS; i++) {
 		process[i].total_cpu = 0;
 		process[i].id = i;
 		process[i].arrival = 0;
@@ -93,14 +107,14 @@ void EnterParameters() {
 	}
 
 	/* for each process */
-	for (int i = 1; i <= TOTAL_PROCS; i++) {
+	for (int i = 1; i <= MAX_PROCS; i++) {
 		/* prompt for process id, arrival time, and total cycle time */
 		// only accept ID if it's between 1 and n
 		do {
 			validProcess = true;
 			printf("\nEnter Process ID: ");      // i think the user enters which process id to work on here
 			scanf("%d", &id);
-			if (id <= 0 || id > TOTAL_PROCS) {
+			if (id <= 0 || id > MAX_PROCS) {
 				printf("\nProcess ID must be greater than 0 and less than total processes\n");
 				validProcess = false;
 			}
@@ -126,6 +140,7 @@ void EnterParameters() {
 		} while (total_cpu <= 0);
 		process[id].total_cpu = total_cpu;
 	}
+	printf("\n");
 	/* print contents of table */
 	PrintTable();
 	return;
@@ -136,14 +151,32 @@ void EnterParameters() {
 /***************************************************************/
 void SchedProcFIFO() {
 	/* declare (and initilize when appropriate) local variables */
+	int laterArrivalTime = 0;
+	int firstArrival = 0;
+	int index = 0;
+
 	/* for each process, reset "done" field to 0 */
+	for (; index <= MAX_PROCS; index++) {
+		process[index].done = 0;
+	}
+	index = 0;
 	/* while there are still processes to schedule */
+	while (index <= MAX_PROCS) {
 		/* initilize the earliest arrival time to INT_MAX (largest integer value) */
+
+
 		/* for each process not yet scheduled */
+		for () {
 			/* check if process has earlier arrival time than current earliest and update */
+		}
+
 		/* set start time, end time, turnaround time, done fields for unscheduled process with earliest arrival time */
+
 		/* update current cycle time and increment number of processes scheduled */
+
+	}
 	/* print contents of table */
+	PrintTable();
 	return;
 }
 
@@ -152,7 +185,9 @@ void SchedProcFIFO() {
 /***************************************************************/
 void SchedProcSJF() {
 	/* declare (and initilize when appropriate) local variables */
+
 	/* for each process, reset "done" field to 0 */
+
 	/* while there are still processes to schedule */
 		/* initilize the lowest total cycle time to INT_MAX (largest integer value) */
 		/* for each process not yet scheduled */
@@ -168,7 +203,9 @@ void SchedProcSJF() {
 /***************************************************************/
 void SchedProcSRT() {
 	/* declare (and initilize when appropriate) local variables */
+
 	/* for each process, reset "done", "total_remaining" and "already_started" fields to 0 */
+
 	/* while there are still processes to schedule */
 		/* initilize the lowest total remaining time to INT_MAX (largest integer value) */
 		/* for each process not yet scheduled */
@@ -198,7 +235,7 @@ int main() {
 	enum { PARAM, FIFO, SJF, SRT, QUIT, INVALID } menuChoice;
 
 	while (i != 5) {
-		printf("Batch Scheduling\n -------------------------------\n");
+		printf("Batch Scheduling\n-------------------------------\n");
 		printf("1) Enter parameters\n");
 		printf("2) Schedule processes with FIFO alogirthm\n");
 		printf("3) Schedule processes with SJF algorithm\n");
