@@ -60,7 +60,7 @@ Lab-2.sln
 Lab-2.vcxproj
 Lab-2.vcxproj.filters
 Lab-2.vcxproj.user
-x64/
+x64/Debug/
 x64/Debug/Lab-2.exe.recipe
 x64/Debug/Lab-2.log
 x64/Debug/Lab-2.tlog/CL.command.1.tlog
