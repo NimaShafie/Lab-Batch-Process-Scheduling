@@ -212,10 +212,6 @@ void SchedProcFIFO() {
 // option #3 SJF algorithm (non-preemptive) Shortest-Job-First
 /***************************************************************/
 void SchedProcSJF() {
-	/* declare (and initilize when appropriate) local variables */
-
-	/* for each process, reset "done" field to 0 */
-
 	/* while there are still processes to schedule */
 		/* initilize the lowest total cycle time to INT_MAX (largest integer value) */
 		/* for each process not yet scheduled */
@@ -223,6 +219,65 @@ void SchedProcSJF() {
 		/* set start time, end time, turnaround time, done fields for unscheduled process with lowest (and available) total cycle time */
 		/* update current cycle time and increment number of processes scheduled */
 	/* print contents of table */
+
+	/* declare (and initilize when appropriate) local variables */
+	int lowestCycleTime = 0;
+	int lowestCycleIndex = 0;
+	int currentProcArrival = 0;
+	int arrivalStart = 0;
+	int procScheduled = 1;
+	int start = 0;
+	int end = 0;
+	int totalTime = 0;
+	bool firstScan = true;
+
+	/* for each process, reset "done" field to 0 */
+	for (int i = 1; i <= MAX_PROCS; i++) {
+		process[i].done = 0;
+		if (process[i].arrival == 0) arrivalStart = i;
+	}
+	// scan through each proc
+	for (; procScheduled <= MAX_PROCS; procScheduled++) {
+		/* initilize the earliest arrival time to INT_MAX (largest integer value) */
+		lowestCycleTime = INT_MAX;
+		// starting from ID[1], identify which proc we are going to start with (lowest arrival time)
+		// scan through every proc in search of the lowest one and record it (starting from all the available procs
+		for (int scanIndex = 1; scanIndex <= MAX_PROCS; scanIndex++) {
+			if (process[scanIndex].done == 0) {		// only scan through non-scheduleded processes
+				//printf("\n\nChecking Process[%d] against all others to find lowest arrival time", scanIndex);
+				//printf("\tearliestArrival is = %d", earliestArrival);
+				currentProcArrival = process[scanIndex].total_cpu;	// record non-scheduled process
+				//printf("\tcurrentProcArrival of Process[%d] = %d\n", scanIndex, currentProcArrival);
+				lowestCycleTime = MinOfTwoInts(lowestCycleTime, currentProcArrival);
+				//printf("earliestArrival is now = %d\n", earliestArrival);
+				if (lowestCycleTime >= currentProcArrival) {
+					lowestCycleTime = currentProcArrival;
+					lowestCycleIndex = scanIndex;
+					//printf("What is the earliest arrival? = %d\n", earliestArrival);
+				}
+			}
+		}
+		//printf("\nEarliest Arrival Time List (Value, Index) = (%d, %d)\n", earliestArrival, lowestCycleIndex);
+		/* set start time, end time, turnaround time, done fields for unscheduled process with earliest arrival time */
+		if (firstScan) {
+			lowestCycleIndex = arrivalStart;
+			start = process[lowestCycleIndex].arrival;
+			end = process[lowestCycleIndex].total_cpu;
+			firstScan = false;
+		}
+		else {
+			start = end;
+			end += process[lowestCycleIndex].total_cpu;
+		}
+		process[lowestCycleIndex].done = 1;
+		process[lowestCycleIndex].start_time = start;
+		process[lowestCycleIndex].end_time = end;
+		process[lowestCycleIndex].turnaround_time = process[lowestCycleIndex].end_time - process[lowestCycleIndex].arrival;
+		//printf("\nProcess[%d]: start_time = %d, end_time = %d\n", lowestCycleIndex, process[lowestCycleIndex].start_time, process[lowestCycleIndex].end_time);
+		/* update current cycle time and increment number of processes scheduled */
+	}
+	/* print contents of table */
+	PrintTable();
 	return;
 }
 
