@@ -38,10 +38,10 @@ typedef struct TableType table_typedef;	// pcb = struct Node
 
 int MAX_PROCS;
 
-// finds the maximum of two integers
-int MaxOfTwoInts(int num1, int num2) {
-	if (num1 > num2) return num1;
-	else return num2;
+// finds the minimum of two integers
+int MinOfTwoInts(int num1, int num2) {
+	if (num1 > num2) return num2;
+	else return num1;
 }
 
 // prints out a formatted table with table_type variables
@@ -58,13 +58,13 @@ void PrintTable() {
 		/* print the contents (id, arrival time, total_cycles) of each field of the table's index */
 		printf("%d\t", process[i].id);
 		printf(" %d\t", process[i].arrival);
-		printf("\t%d", process[i].total_cpu);
+		printf("\t %d", process[i].total_cpu);
 		if (process[i].done == false) printf("\n");
 		/* if process has been scheduled ("done" field is 1, print other contents (start time, end time, turnaround time) */
 		else {
-			printf("%d\t", process[i].start_time);
-			printf("%d\t", process[i].end_time);
-			printf("%d\t", process[i].turnaround_time);
+			printf("\t %d", process[i].start_time);
+			printf("\t %d", process[i].end_time);
+			printf("\t%d\n", process[i].turnaround_time);
 		}
 	}
 	return;
@@ -151,29 +151,57 @@ void EnterParameters() {
 /***************************************************************/
 void SchedProcFIFO() {
 	/* declare (and initilize when appropriate) local variables */
-	int laterArrivalTime = 0;
-	int firstArrival = 0;
-	int index = 0;
+	int earliestArrival = 0;
+	int earlistArrivalIndex = 0;
+	int currentProcArrival = 0;
+	int procScheduled = 1;
+	int start = 0;
+	int end = 0;
+	int totalTime = 0;
+	bool firstScan = true;
 
 	/* for each process, reset "done" field to 0 */
-	for (; index <= MAX_PROCS; index++) {
-		process[index].done = 0;
+	for (int i = 1; i <= MAX_PROCS; i++) {
+		process[i].done = 0;
 	}
-	index = 0;
-	/* while there are still processes to schedule */
-	while (index <= MAX_PROCS) {
+	// scan through each proc
+	for (; procScheduled <= MAX_PROCS; procScheduled++) {
 		/* initilize the earliest arrival time to INT_MAX (largest integer value) */
-
-
-		/* for each process not yet scheduled */
-		for () {
-			/* check if process has earlier arrival time than current earliest and update */
+		earliestArrival = INT_MAX;
+		// starting from ID[1], identify which proc we are going to start with (lowest arrival time)
+		// scan through every proc in search of the lowest one and record it (starting from all the available procs
+		for (int scanIndex = 1; scanIndex <= MAX_PROCS; scanIndex++) {	
+			if (process[scanIndex].done == 0) {		// only scan through non-scheduleded processes
+				//printf("\n\nChecking Process[%d] against all others to find lowest arrival time", scanIndex);
+				//printf("\tearliestArrival is = %d", earliestArrival);
+				currentProcArrival = process[scanIndex].arrival;	// record non-scheduled process
+				//printf("\tcurrentProcArrival of Process[%d] = %d\n", scanIndex, currentProcArrival);
+				earliestArrival = MinOfTwoInts(earliestArrival, currentProcArrival);
+				//printf("earliestArrival is now = %d\n", earliestArrival);
+				if (earliestArrival >= currentProcArrival) {
+					earliestArrival = currentProcArrival;
+					earlistArrivalIndex = scanIndex;
+					//printf("What is the earliest arrival? = %d\n", earliestArrival);
+				}
+			}
 		}
-
+		process[earlistArrivalIndex].done = 1;
+		//printf("\nEarliest Arrival Time List (Value, Index) = (%d, %d)\n", earliestArrival, earlistArrivalIndex);
 		/* set start time, end time, turnaround time, done fields for unscheduled process with earliest arrival time */
-
+		if (firstScan) {
+			start = process[earlistArrivalIndex].arrival;
+			end = process[earlistArrivalIndex].total_cpu;
+			firstScan = false;
+		}
+		else {
+			start = end;
+			end += process[earlistArrivalIndex].total_cpu;
+		}
+		process[earlistArrivalIndex].start_time = start;
+		process[earlistArrivalIndex].end_time = end;
+		process[earlistArrivalIndex].turnaround_time = process[earlistArrivalIndex].end_time - process[earlistArrivalIndex].arrival;
+		//printf("\nProcess[%d]: start_time = %d, end_time = %d\n", earlistArrivalIndex, process[earlistArrivalIndex].start_time, process[earlistArrivalIndex].end_time);
 		/* update current cycle time and increment number of processes scheduled */
-
 	}
 	/* print contents of table */
 	PrintTable();
@@ -181,7 +209,7 @@ void SchedProcFIFO() {
 }
 
 
-// option #3 SJF algorithm (non-preemptive)
+// option #3 SJF algorithm (non-preemptive) Shortest-Job-First
 /***************************************************************/
 void SchedProcSJF() {
 	/* declare (and initilize when appropriate) local variables */
@@ -199,7 +227,7 @@ void SchedProcSJF() {
 }
 
 
-// option #4 SRT algorithm (preemptive version of SJF)
+// option #4 SRT algorithm (preemptive version of SJF) Shortest-remaining-time-first
 /***************************************************************/
 void SchedProcSRT() {
 	/* declare (and initilize when appropriate) local variables */
