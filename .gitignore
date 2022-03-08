@@ -73,3 +73,5 @@ x64/Debug/Lab-2.tlog/link.write.1.tlog
 x64/Debug/Lab-2.vcxproj.FileListAbsolute.txt
 .vs/Lab-2/v17/.suo
 /x64/Debug/Lab-2.tlog
+.vscode/tasks.json
+.vscode/launch.json
