@@ -67,6 +67,7 @@ void PrintTable() {
 			printf("\t%d\n", process[i].turnaround_time);
 		}
 	}
+    printf("\n");
 	return;
 }
 
@@ -285,8 +286,6 @@ void SchedProcSJF() {
 // option #4 SRT algorithm (preemptive version of SJF) Shortest-remaining-time-first
 /***************************************************************/
 void SchedProcSRT() {
-	/* declare (and initilize when appropriate) local variables */
-
 	/* for each process, reset "done", "total_remaining" and "already_started" fields to 0 */
 
 	/* while there are still processes to schedule */
@@ -299,6 +298,97 @@ void SchedProcSRT() {
 		/* decrement total remaining time of process with lowest (and available) total remaining cycle time */
 		/* if remaining time is 0, set done field to 1, increment cycle time and number of scheduled processes*/
 	/* print contents of table */
+	
+    /* declare (and initilize when appropriate) local variables */
+	int lowestCycleTime = 0;
+	int lowestCycleIndex = 0;
+	int currentProcArrival = 0;
+	int arrivalStart = 0;
+	int procScheduled = 1;
+	int start = 0;
+	int end = 0;
+	int totalTime = 0;
+	bool firstScan = true;
+
+	/* for each process, reset "done", "total_remaining" and "already_started" fields to 0 */
+	for (int i = 1; i <= MAX_PROCS; i++) {
+		process[i].done = 0;
+        process[i].total_remaining = process[i].total_cpu;
+        process[i].already_started = 0;
+		if (process[i].arrival == 0) arrivalStart = i;      // will mark the first arrival proc to start with here
+	}
+	// scan through each proc
+	for (; procScheduled <= MAX_PROCS; procScheduled++) {
+		/* initilize the lowest total remaining time to INT_MAX (largest integer value) */
+		lowestCycleTime = INT_MAX;
+		// starting from ID[1], identify which proc we are going to start with (lowest arrival time)
+		// scan through every proc in search of the lowest one and record it (starting from all the available procs)
+        /* check if process has lower total remaining time than current lowest and has arrival time less than current cycle time and update */
+		for (int scanIndex = 1; scanIndex <= MAX_PROCS; scanIndex++) {
+			if (process[scanIndex].done == 0) {		// only scan through non-scheduleded processes
+				//printf("\n\nChecking Process[%d] against all others to find lowest arrival time", scanIndex);
+				//printf("\tearliestArrival is = %d", earliestArrival);
+				currentProcArrival = process[scanIndex].total_cpu;	// record non-scheduled process
+				//printf("\tcurrentProcArrival of Process[%d] = %d\n", scanIndex, currentProcArrival);
+				lowestCycleTime = MinOfTwoInts(lowestCycleTime, currentProcArrival);
+				//printf("earliestArrival is now = %d\n", earliestArrival);
+				if (lowestCycleTime >= currentProcArrival) {
+					lowestCycleTime = currentProcArrival;
+					lowestCycleIndex = scanIndex;
+					//printf("What is the earliest arrival? = %d\n", earliestArrival);
+				}
+			}
+		}
+		//printf("\nShortest CPU total time is (Value, Index) = (%d, %d)\n", process[lowestCycleIndex].arrival, lowestCycleIndex);
+		/* set end time, turnaround time of process with lowest (and available) total remaining cycle time */
+		if (firstScan) {
+            if(process[arrivalStart].already_started == 1) {    // when we already preempted the earliest arrival process
+            // we need to check if the lowestCycleIndex (lowest cpu total time) is equal to the lowest process arrival time
+                if(arrivalStart == lowestCycleIndex) {
+                printf("The shortest cpu cycle time is now equal to the lowest arrival time, this means we can resume the intiial arrival process now\n");
+                process[lowestCycleIndex].total_remaining = 0;
+                start = 0;
+                end += process[lowestCycleIndex].total_cpu;
+                firstScan = false;
+                }
+            }
+            else if((lowestCycleIndex != arrivalStart) && (process[arrivalStart].already_started == 0)) {      // when the shortest cpu time is NOT equal to process arival 0
+                printf("\nDetected that the first scan reveals process[0] is NOT the shortest total_cpu\n");
+                process[arrivalStart].already_started = 1;      // we're going to mark process[0] as already started
+                process[arrivalStart].total_remaining -= 1;     // we're going to subtract 1 from the total time remaining since it's being preempted
+                // we now need to preempt this proc with the shortest cpu_total, which is stored in lowestCycleIndex
+                printf("\nShortest CPU total time is (Value, Index) = (%d, %d)\n", process[lowestCycleIndex].arrival, lowestCycleIndex);
+                // now finish off the lowestCycleIndex here
+
+            }
+            else {      //      when the shortest cpu time is equal to process arrival 0
+			lowestCycleIndex = arrivalStart;
+			start = process[lowestCycleIndex].arrival;
+			end = process[lowestCycleIndex].total_cpu;
+            process[lowestCycleIndex].total_remaining -= end;
+			firstScan = false;
+            }
+		}
+		else {
+			start = end;
+			end += process[lowestCycleIndex].total_cpu;
+            process[lowestCycleIndex].total_remaining -= process[lowestCycleIndex].total_cpu;
+		}
+        /* if remaining time is 0, set done field to 1, increment cycle time and number of scheduled processes*/
+		/* update current cycle time and increment number of processes scheduled */
+        if(process[lowestCycleIndex].total_remaining == 0) {
+            process[lowestCycleIndex].end_time = end;
+            process[lowestCycleIndex].done = 1;
+            process[lowestCycleIndex].turnaround_time = process[lowestCycleIndex].end_time - process[lowestCycleIndex].arrival;
+        }
+        else {
+            process[lowestCycleIndex].start_time = start;
+        }
+		//printf("\nProcess[%d]: start_time = %d, end_time = %d\n", lowestCycleIndex, process[lowestCycleIndex].start_time, process[lowestCycleIndex].end_time);
+        /* decrement total remaining time of process with lowest (and available) total remaining cycle time */
+	}
+	/* print contents of table */
+	PrintTable();
 	return;
 }
 
@@ -307,6 +397,19 @@ void SchedProcSRT() {
 // free the memory being used by the program then quit it
 /***************************************************************/
 void FreeMemoryQuitProgram() {
+    /*
+    void garbage_collection() {
+    if (pcb != NULL) {
+        if (pcb[0].children != NULL) {
+          printf("Destroying remaining processes: ");
+        destroy_recursion(pcb[0].children);
+        }
+    free(pcb);
+    }
+    return;
+}
+    */
+
 	/* free the schedule table if not NULL */
 	return;
 }
