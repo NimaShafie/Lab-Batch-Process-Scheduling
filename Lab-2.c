@@ -2,6 +2,7 @@
 Lab 2 - Batch Process Scheduling
 Comp 322/L
 Nima Shafie
+Re-done and sent on 5/2/2022
 */
 
 #define _CRT_SECURE_NO_WARNINGS
@@ -28,11 +29,11 @@ struct TableType {
 	int arrival;
 	int total_cpu;
 	int total_remaining;
-	bool done;
 	int start_time;
-	bool already_started;
 	int end_time;
 	int turnaround_time;
+	bool done;
+	bool already_started;
 } *process = NULL;
 typedef struct TableType table_typedef;	// pcb = struct Node
 
@@ -40,8 +41,10 @@ int MAX_PROCS;
 
 // finds the minimum of two integers
 int MinOfTwoInts(int num1, int num2) {
-	if (num1 > num2) return num2;
-	else return num1;
+	if (num1 > num2)
+		return num2;
+	else
+		return num1;
 }
 
 // prints out a formatted table with table_type variables
@@ -54,17 +57,21 @@ void PrintTable() {
 	printf("\n-------------------------------------------------------------\n");
 
 	/* for each process */
-	for (int i = 1; i <= MAX_PROCS; i++) {
+	for (int i = 0; i <= MAX_PROCS; i++) {
 		/* print the contents (id, arrival time, total_cycles) of each field of the table's index */
-		printf("%d\t", process[i].id);
-		printf(" %d\t", process[i].arrival);
-		printf("\t %d", process[i].total_cpu);
-		if (process[i].done == false) printf("\n");
-		/* if process has been scheduled ("done" field is 1, print other contents (start time, end time, turnaround time) */
-		else {
-			printf("\t %d", process[i].start_time);
-			printf("\t %d", process[i].end_time);
-			printf("\t%d\n", process[i].turnaround_time);
+		if (process[i].total_cpu > 0) {
+			printf("%d\t", process[i].id);
+			printf(" %d\t", process[i].arrival);
+			printf("\t %d", process[i].total_cpu);
+			if (process[i].done == false)
+				printf("\n");
+			/* if process has been scheduled
+			"done" field is 1, print other contents (start time, end time, turnaround time) */
+			else {
+				printf("\t %d", process[i].start_time);
+				printf("\t %d", process[i].end_time);
+				printf("\t%d\n", process[i].turnaround_time);
+			}
 		}
 	}
 	printf("\n");
@@ -83,8 +90,12 @@ void EnterParameters() {
 	bool validProcess;
 
 	/* prompt for total number of processes */
-	printf("Enter total number of processes: ");
-	scanf("%d", &MAX_PROCS);
+	do {
+		printf("Enter total number of processes: ");
+		scanf("%d", &MAX_PROCS);
+		if (MAX_PROCS <= 0)
+			printf("\nNumber of processes must be greater than 0.\n\n");
+	} while (MAX_PROCS <= 0);
 
 	/* allocate memory for table to hold process parameters */
 	process = (table_typedef*)malloc(MAX_PROCS * sizeof(process)); // Memory is allocated for 'n' elements 
@@ -94,7 +105,7 @@ void EnterParameters() {
 	}
 
 	// each process[i] is its own process, so we're still making a dynamic array of processes
-	for (int i = 1; i <= MAX_PROCS; i++) {
+	for (int i = 0; i <= MAX_PROCS; i++) {
 		process[i].total_cpu = 0;
 		process[i].id = i;
 		process[i].arrival = 0;
@@ -110,39 +121,39 @@ void EnterParameters() {
 	/* for each process */
 	for (int i = 1; i <= MAX_PROCS; i++) {
 		/* prompt for process id, arrival time, and total cycle time */
-		// only accept ID if it's between 1 and n
+		// only accept ID if it's between 0 and n
 		do {
 			validProcess = true;
-			printf("\nEnter Process ID: ");      // i think the user enters which process id to work on here
+			printf("\nEnter Process ID: ");
 			scanf("%d", &id);
-			if (id <= 0 || id > MAX_PROCS) {
-				printf("\nProcess ID must be greater than 0 and less than total processes\n");
+			if (id < 0 || id > MAX_PROCS) {
+				printf("\nProcess ID must be non-negative and less than total processes\n");
 				validProcess = false;
 			}
 			else {
-				if (process[id].total_cpu != 0) {		// if the chosen process has already been selected, prompt a different process to select
+				// if the chosen process has already been selected, prompt a different process to select
+				if (process[id].total_cpu != 0) {
 					printf("\nThis Process ID has already been initialized earlier, choose a different one\n");
 					validProcess = false;
 				}
 			}
 		} while (!validProcess);
 		do {
-			printf("Enter arrival cycle for process P[%d", id);
-			printf("]: ");
+			printf("Enter arrival cycle for process P[%d]: ", id);
 			scanf("%d", &arrival);
-			if (arrival < 0) printf("\nArrival cycle must be at least 0 or greater\n");
+			if (arrival < 0)
+				printf("\nArrival cycle must be at least 0 or greater\n");
 		} while (arrival < 0);
 		process[id].arrival = arrival;
 		do {
-			printf("Enter total cycles for process P[%d", id);
-			printf("]: ");
+			printf("Enter total cycles for process P[%d]: ", id);
 			scanf("%d", &total_cpu);
-			if (total_cpu <= 0) printf("\nTotal cycles must be at least 0 or greater\n");
+			if (total_cpu <= 0)
+				printf("\nTotal cycles must be at least 0 or greater\n");
 		} while (total_cpu <= 0);
 		process[id].total_cpu = total_cpu;
 	}
 	printf("\n");
-	/* print contents of table */
 	PrintTable();
 	return;
 }
@@ -154,16 +165,16 @@ void SchedProcFIFO() {
 	int lowestArrivalTime = 0;
 	int currentProcArrival = 0;
 	int procScheduled = 0;
-	int scanIndex = 1;
+	int scanIndex = 0;
 	int totalTimer = 0;
 	bool foundProc = false;
 
 	/* for each process, reset "done" field to 0 */
-	for (int i = 1; i <= MAX_PROCS; i++) process[i].done = 0;
+	for (int i = 0; i <= MAX_PROCS; i++)
+		process[i].done = 0;
 	// scan through each proc
-	while (procScheduled < MAX_PROCS) {
+	while (procScheduled <= MAX_PROCS) {
 		if (process[scanIndex].done == 0 && (process[scanIndex].arrival <= totalTimer)) {
-			//printf("\nEarliest Arrival Time List (Value, Index) = (%d, %d)\n", earliestArrival, earliestArrivalIndex);
 			process[scanIndex].start_time = totalTimer;
 			totalTimer += process[scanIndex].total_cpu;
 			process[scanIndex].done = true;
@@ -172,11 +183,9 @@ void SchedProcFIFO() {
 			procScheduled++;
 			scanIndex++;
 			foundProc = false;
-			//printf("\nProcess[%d]: start_time = %d, end_time = %d, turn_around = %d\n", earliestArrivalIndex, process[earliestArrivalIndex].start_time, process[earliestArrivalIndex].end_time, process[earliestArrivalIndex].turnaround_time);
 		}
 		else totalTimer++;
 	}
-	/* print contents of table */
 	PrintTable();
 	return;
 }
@@ -189,12 +198,12 @@ void SchedProcSJF() {
 	int lowestCycleIndex = 0;
 	int currentProcArrival = 0;
 	int procScheduled = 0;
-	int scanIndex = 1;
+	int scanIndex = 0;
 	int totalTimer = 0;
 	bool foundProc = false;
 
 	/* for each process, reset "done", "total_remaining" and "already_started" fields to 0 */
-	for (int i = 1; i <= MAX_PROCS; i++) {
+	for (int i = 0; i <= MAX_PROCS; i++) {
 		process[i].done = 0;
 		process[i].total_remaining = process[i].total_cpu;
 	}
@@ -202,37 +211,39 @@ void SchedProcSJF() {
 	while (procScheduled < MAX_PROCS) {
 		/* initilize the earliest arrival time to INT_MAX (largest integer value) */
 		lowestCycleTime = INT_MAX;
-		scanIndex = 1;
+		scanIndex = 0;
 		while (!foundProc) {
+			// try making scanIndex <= MAX_PROCS and see if it works just like that
 			for (; scanIndex <= MAX_PROCS; scanIndex++) {
-				if (process[scanIndex].done == 0 && (process[scanIndex].arrival <= totalTimer)) {		// only scan through non-scheduleded procs & procs that have arrived on time compared to total timer
-					currentProcArrival = process[scanIndex].total_cpu;	// record non-scheduled process
+				// only scan through non-scheduleded procs & procs that have arrived on time compared to total timer
+				if (process[scanIndex].done == 0 && (process[scanIndex].arrival <= totalTimer) && (process[scanIndex].total_cpu > 0)) {
+					// record non-scheduled process
+					currentProcArrival = process[scanIndex].total_cpu;
 					lowestCycleTime = MinOfTwoInts(lowestCycleTime, currentProcArrival);
 					if (lowestCycleTime >= currentProcArrival) {
 						lowestCycleTime = currentProcArrival;
 						lowestCycleIndex = scanIndex;
 						foundProc = true;
-						//printf("\nProcess[%d]\t arrival = %d\t time remaining = %d\n", lowestCycleIndex, process[lowestCycleIndex].arrival, process[lowestCycleIndex].total_remaining);
 					}
 				}
 			}
-			if (!foundProc) {		// we only reach here if the total timer has not yet reached the next proc's arrival time, so we just run this as idle time and extend the start and end timer
+			// we only reach here if the total timer has not yet reached the next proc's arrival time
+			// so we just run this as idle time and extend the start and end timer
+			if (!foundProc) {
 				totalTimer++;
-				scanIndex = 1;
+				scanIndex = 0;
 			}
 		}
-		//printf("\nEarliest Arrival Time List (Value, Index) = (%d, %d)\n", earliestArrival, lowestCycleIndex);
 		process[lowestCycleIndex].start_time = totalTimer;
 		totalTimer += process[lowestCycleIndex].total_cpu;
 		process[lowestCycleIndex].total_remaining -= process[lowestCycleIndex].total_cpu;
 		process[lowestCycleIndex].done = true;
 		process[lowestCycleIndex].end_time = totalTimer;
-		process[lowestCycleIndex].turnaround_time = process[lowestCycleIndex].end_time - process[lowestCycleIndex].arrival;
+		process[lowestCycleIndex].turnaround_time =
+			process[lowestCycleIndex].end_time - process[lowestCycleIndex].arrival;
 		procScheduled++;
 		foundProc = false;
-		//printf("\nProcess[%d]: start_time = %d, end_time = %d, turn_around = %d\n", lowestCycleIndex, process[lowestCycleIndex].start_time, process[lowestCycleIndex].end_time, process[lowestCycleIndex].turnaround_time);
 	}
-	/* print contents of table */
 	PrintTable();
 	return;
 }
@@ -245,12 +256,14 @@ void SchedProcSRT() {
 	int lowestCycleIndex = 0;
 	int currentProcArrival = 0;
 	int procScheduled = 0;
-	int scanIndex = 1;
+	int scanIndex = 0;
 	int totalTimer = 0;
+	int tempIndex = -1;
 	bool foundProc = false;
+	bool first_run = true;
 
 	/* for each process, reset "done", "total_remaining" and "already_started" fields to 0 */
-	for (int i = 1; i <= MAX_PROCS; i++) {
+	for (int i = 0; i <= MAX_PROCS; i++) {
 		process[i].done = 0;
 		process[i].total_remaining = process[i].total_cpu;
 		process[i].already_started = 0;
@@ -259,46 +272,65 @@ void SchedProcSRT() {
 	while (procScheduled < MAX_PROCS) {
 		/* initilize the earliest arrival time to INT_MAX (largest integer value) */
 		lowestCycleTime = INT_MAX;
-		scanIndex = 1;
+		scanIndex = 0;
 		while (!foundProc) {
 			for (; scanIndex <= MAX_PROCS; scanIndex++) {
-				if (process[scanIndex].done == 0 && (process[scanIndex].arrival <= totalTimer)) {		// only scan through non-scheduleded procs & procs that have arrived on time compared to total timer
-					currentProcArrival = process[scanIndex].total_remaining;	// record non-scheduled process
-					lowestCycleTime = MinOfTwoInts(lowestCycleTime, currentProcArrival);
+				// only scan through non-scheduleded procs & procs that have arrived on time compared to total timer
+				if (process[scanIndex].done == 0 && (process[scanIndex].arrival <= totalTimer) && (process[scanIndex].total_cpu > 0)) {
+					// record non-scheduled process
+					currentProcArrival = process[scanIndex].total_remaining;		// this gets the total remaining of the current scan index
+					lowestCycleTime = MinOfTwoInts(lowestCycleTime, currentProcArrival);	// this returns the lowest remaining time (index)
+					// currentProcArrival = scanIndex's total_remaining
+					// lowestCycleTime is the total_remaining 
+					// if scanIndex.total_remaining < lowestCycleIndex.total_remaining
+					//	  if scanIndex.arrival < lowestCycleIndex.arrival
+					//		  then don't set this new value as the lowest cylce index
+					if (!first_run) {
+						if (process[scanIndex].total_remaining == process[lowestCycleIndex].total_remaining) {
+							if (process[scanIndex].arrival > process[lowestCycleIndex].arrival) {
+								currentProcArrival = INT_MAX;
+							}
+						}
+					}
 					if (lowestCycleTime >= currentProcArrival) {
 						lowestCycleTime = currentProcArrival;
 						lowestCycleIndex = scanIndex;
 						foundProc = true;
-						//printf("\nProcess[%d]\t arrival = %d\t time remaining = %d\n", lowestCycleIndex, process[lowestCycleIndex].arrival, process[lowestCycleIndex].total_remaining);
 					}
 				}
+				first_run = false;
 			}
-			if (!foundProc) {		// we only reach here if the total timer has not yet reached the next proc's arrival time, so we just run this as idle time and extend the start and end timer
+			// we only reach here if the total timer has not yet reached the next proc's arrival time
+			// so we just run this as idle time and extend the start and end timer
+			if (!foundProc) {
 				totalTimer++;
-				scanIndex = 1;
+				scanIndex = 0;
 			}
 		}
-		//printf("\nEarliest Arrival Time List (Value, Index) = (%d, %d)\n", earliestArrival, lowestCycleIndex);
-		// the logic is we're going to enter these blocks below for every 1 time cycle, we can then keep updating the process and see if there is an ealier one we want to start
+		// the logic is we're going to enter these blocks below for every 1 time cycle
+		// we can then keep updating the process and see if there is an ealier one we want to start
 		if (process[lowestCycleIndex].already_started == false) {		// we start the start timer
 			process[lowestCycleIndex].already_started = true;
 			process[lowestCycleIndex].start_time = totalTimer;
 			process[lowestCycleIndex].total_remaining--;
 		}
-		else {		// we've already encountered this proc before, continue cycling through
+		// we've already encountered this proc before, continue cycling through
+		else {
 			process[lowestCycleIndex].total_remaining--;
 		}
 		totalTimer++;
-		if (process[lowestCycleIndex].total_remaining == 0) {		// we've finish the process
+		// we've finish the process
+		if (process[lowestCycleIndex].total_remaining == 0) {
 			process[lowestCycleIndex].done = true;
 			process[lowestCycleIndex].end_time = totalTimer;
-			process[lowestCycleIndex].turnaround_time = process[lowestCycleIndex].end_time - process[lowestCycleIndex].arrival;
+			process[lowestCycleIndex].turnaround_time =
+				process[lowestCycleIndex].end_time - process[lowestCycleIndex].arrival;
 			procScheduled++;
 		}
+		//tempIndex = -1;
+		first_run = true;
 		foundProc = false;
-		//printf("\nProcess[%d]: start_time = %d, end_time = %d, turn_around = %d\n", lowestCycleIndex, process[lowestCycleIndex].start_time, process[lowestCycleIndex].end_time, process[lowestCycleIndex].turnaround_time);
 	}
-	/* print contents of table */
 	PrintTable();
 	return;
 }
@@ -309,8 +341,8 @@ void SchedProcSRT() {
 /***************************************************************/
 void FreeMemoryQuitProgram() {
 	/* free the schedule table if not NULL */
-	if (process != NULL) printf("\nDestroying remaining processes\n");
-	free(process);
+	if (process != NULL)
+		free(process);
 	return;
 }
 
